@@ -1,13 +1,16 @@
 require 'spec_helper'
 
-def app;
+def app
   Rack::Lint.new(@app)
 end
 
 def options
-  { :margin          => "1cm", :out_path => Dir.tmpdir,
-    :polling_offset  => 10, :polling_interval => 1, :cache_ttl => 3600,
-    :request_timeout => 1 }
+  { :margin         => "1cm",
+  :out_path         => Dir.tmpdir,
+  :polling_offset   => 10,
+  :polling_interval => 1,
+  :cache_ttl        => 3600,
+  :request_timeout  => 1 }
 end
 
 def mock_app(options = { }, conditions = { })
@@ -29,6 +32,7 @@ describe Shrimp::Middleware do
       get '/test.pdf'
       @middleware.send(:'render_as_pdf?').should be true
     end
+
     it "should return 503 the first time" do
       get '/test.pdf'
       last_response.status.should eq 503
@@ -42,7 +46,7 @@ describe Shrimp::Middleware do
       last_response.header["Retry-After"].should eq "1"
     end
 
-    it "should set render to to outpath" do
+    it "should set render_to to out_path" do
       get '/test.pdf'
       @middleware.send(:render_to).should match (Regexp.new("^#{options[:out_path]}"))
     end
@@ -72,9 +76,8 @@ describe Shrimp::Middleware do
       last_response.status.should eq 200
       last_response.body.should eq "Hello World"
     end
-
-
   end
+
   context "not matching pdf" do
     it "should skip pdf rendering" do
       get 'http://www.example.org/test'
@@ -84,7 +87,7 @@ describe Shrimp::Middleware do
   end
 end
 
-describe "Conditions" do
+describe Shrimp::Middleware, "Conditions" do
   context "only" do
     before { mock_app(options, :only => [%r[^/invoice], %r[^/public]]) }
     it "render pdf for set only option" do
