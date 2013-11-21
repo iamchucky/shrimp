@@ -44,8 +44,11 @@ module Shrimp
 
     # Private: start phantom rendering in a separate process
     def render_pdf
-      puts %(#{self.class}: Converting web page at #{(html_url).inspect} into a PDF ...) if Shrimp.config.debug
-      Process::detach fork { Phantom.new(html_url, @options, @request.cookies).to_pdf(render_to) }
+      log_render_pdf_start
+      Process::detach fork {
+        Phantom.new(html_url, @options, @request.cookies).to_pdf(render_to)
+        log_render_pdf_completion
+      }
     end
 
     def already_rendered?
