@@ -54,7 +54,7 @@ Shrimp.configure do |config|
   # config.orientation      = 'portrait'
 
   # a temporary dir used to store tempfiles
-  # config.tmpdir           = Dir.tmpdir
+  # config.tmpdir           = Dir.mktmpdir('shrimp'),
 
   # the default rendering time in ms
   # increase if you need to render very complex pages
