@@ -64,7 +64,7 @@ describe Shrimp::SynchronousMiddleware do
     context 'requesting an HTML resource that redirects' do
       before {
         phantom = Shrimp::Phantom.new('http://example.org/redirect_me')
-        phantom.should_receive(:to_pdf).and_return nil
+        phantom.should_receive(:to_file).and_return nil
         phantom.stub :error => "302 Unable to load the address!",
                      :redirect_to => "http://localhost:8800/sign_in"
         Shrimp::Phantom.should_receive(:new).and_return phantom

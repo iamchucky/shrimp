@@ -30,8 +30,13 @@ See http://phantomjs.org/download.html for instructions on how to install Phanto
 require 'shrimp'
 url     = 'http://www.google.com'
 options = { :margin => "1cm"}
-Shrimp::Phantom.new(url, options).to_pdf("~/output.pdf")
+Shrimp::Phantom.new(url, options).to_file("~/output.pdf")
 ```
+
+```ruby
+Shrimp::Phantom.new('file:///path/to/page.html').to_file("~/output.png")
+```
+
 ## Configuration
 
 Here is a list of configuration options that you can set.  Unless otherwise noted in comments, the

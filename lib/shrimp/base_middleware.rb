@@ -67,7 +67,7 @@ module Shrimp
       log_render_pdf_start
       Phantom.new(html_url, @options, @request.cookies).tap do |phantom|
         @phantom = phantom
-        phantom.to_pdf(render_to)
+        phantom.to_file(render_to)
         log_render_pdf_completion
       end
     end

@@ -127,19 +127,16 @@ module Shrimp
     # path  - the destination path defaults to outfile
     #
     # Returns the path to the pdf file
-    def to_pdf(path=nil)
+    def to_file(path=nil)
       @outfile = File.expand_path(path) if path
       self.run
       @outfile
     end
 
-    # Public: renders to pdf
-    # path  - the destination path defaults to outfile
-    #
-    # Returns a File Handle of the Resulting pdf
-    def to_file(path=nil)
-      self.to_pdf(path)
-      File.new(@outfile)
+    def to_file!(path=nil)
+      @outfile = File.expand_path(path) if path
+      self.run!
+      @outfile
     end
 
     # Public: renders to pdf
@@ -147,22 +144,11 @@ module Shrimp
     #
     # Returns the binary string of the pdf
     def to_string(path=nil)
-      File.open(self.to_pdf(path)).read
-    end
-
-    def to_pdf!(path=nil)
-      @outfile = File.expand_path(path) if path
-      self.run!
-      @outfile
-    end
-
-    def to_file!(path=nil)
-      self.to_pdf!(path)
-      File.new(@outfile)
+      File.open(self.to_file(path)).read
     end
 
     def to_string!(path=nil)
-      File.open(self.to_pdf!(path)).read
+      File.open(self.to_file!(path)).read
     end
 
     private
