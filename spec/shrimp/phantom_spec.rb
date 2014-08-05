@@ -92,18 +92,51 @@ describe Shrimp::Phantom do
     end
   end
 
-  context "rendering to a String" do
+  context "rendering to a png" do
     before(:all) do
-      phantom = Shrimp::Phantom.new("file://#{test_file}", { :margin => "2cm" }, { })
-      @result = phantom.to_string("#{tmpdir}/test.pdf")
+      @phantom = Shrimp::Phantom.new("file://#{test_file}", { :margin => "2cm" }, { })
+      @result  = @phantom.to_file("#{tmpdir}/test.png")
     end
 
-    it "should return the File IO String" do
+    it "should return a path to png" do
       @result.should be_a String
+      @result.should eq "#{tmpdir}/test.png"
     end
 
-    it "should be a valid pdf" do
-      valid_pdf?(@result).should eq true
+    it "should be a valid png" do
+      valid_png?(File.new(@result)).should eq true
+    end
+  end
+
+  context "rendering to a String" do
+    context "using the default format ('pdf')" do
+      before(:all) do
+        phantom = Shrimp::Phantom.new("file://#{test_file}", { :margin => "2cm" }, { })
+        @result = phantom.to_string
+      end
+
+      it "should return the string" do
+        @result.should be_a String
+      end
+
+      it "should be a valid pdf" do
+        valid_pdf?(@result).should eq true
+      end
+    end
+
+    context "specifying 'png' format" do
+      before(:all) do
+        phantom = Shrimp::Phantom.new("file://#{test_file}", { :margin => "2cm" }, { })
+        @result = phantom.to_string('png')
+      end
+
+      it "should return the string" do
+        @result.should be_a String
+      end
+
+      it "should be a valid pdf" do
+        valid_png?(@result).should eq true
+      end
     end
   end
 

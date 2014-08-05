@@ -32,6 +32,16 @@ def valid_pdf?(io)
   end
 end
 
+def valid_png?(io)
+  is_png = lambda {|input| input[0..7] == "\x89PNG\r\n\u001A\n" }
+  case io
+    when File
+      is_png[io.read]
+    when String
+      is_png[io]
+  end
+end
+
 # Used by rack-test when we call get
 def app
   Rack::Lint.new(@app)

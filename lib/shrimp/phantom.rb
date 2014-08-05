@@ -28,6 +28,10 @@ module Shrimp
     attr_reader :options, :cookies, :result, :error, :response, :response_headers
     SCRIPT_FILE = File.expand_path('../rasterize.js', __FILE__)
 
+    def self.default_file_name(format = 'pdf')
+      "#{Shrimp.config.to_h[:tmpdir]}/#{Digest::MD5.hexdigest((Time.now.to_i + rand(9001)).to_s)}.#{format}"
+    end
+
     # Public: Runs the phantomjs binary
     #
     # Returns the stdout output from phantomjs
@@ -98,7 +102,7 @@ module Shrimp
       format, zoom, margin, orientation = options[:format], options[:zoom], options[:margin], options[:orientation]
       rendering_time, timeout           = options[:rendering_time], options[:rendering_timeout]
       viewport_width, viewport_height   = options[:viewport_width], options[:viewport_height]
-      @outfile                          ||= "#{options[:tmpdir]}/#{Digest::MD5.hexdigest((Time.now.to_i + rand(9001)).to_s)}.pdf"
+      @outfile                          ||= self.class.default_file_name()
       command_config_file               = "--config=#{options[:command_config_file]}"
       [Shrimp.config.phantomjs, command_config_file, SCRIPT_FILE, @source.to_s, @outfile, format, zoom, margin, orientation, cookie_file, rendering_time, timeout, viewport_width, viewport_height ].map(&:to_s)
     end
@@ -139,16 +143,16 @@ module Shrimp
       @outfile
     end
 
-    # Public: renders to pdf
-    # path  - the destination path defaults to outfile
+    # Public: renders to the specified format
+    # format  - the desired format ('pdf' or 'png'); default is 'pdf'
     #
     # Returns the binary string of the pdf
-    def to_string(path=nil)
-      File.open(self.to_file(path)).read
+    def to_string(format='pdf')
+      File.open(self.to_file(self.class.default_file_name(format))).read
     end
 
-    def to_string!(path=nil)
-      File.open(self.to_file!(path)).read
+    def to_string!(format='pdf')
+      File.open(self.to_file!(self.class.default_file_name(format))).read
     end
 
     private
