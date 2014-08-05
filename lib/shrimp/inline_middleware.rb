@@ -47,6 +47,7 @@ module Shrimp
           env[key].sub!(%r<\.pdf(\?|$)>, '\1')
         end
       end
+      env['PhantomJS'] = 'Shrimp::InlineMiddleware'
       @app.call(env)
     end
 
