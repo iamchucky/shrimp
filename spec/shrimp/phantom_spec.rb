@@ -145,10 +145,10 @@ describe Shrimp::Phantom do
       end
     end
 
-    it "should be unable to copy file" do
+    it "should be unable to open file" do
       phantom = Shrimp::Phantom.new("file://#{test_file}")
       phantom.to_pdf("/foo/bar/")
-      phantom.error.should include "Unable to copy file "
+      phantom.error.should include "Unable to open file '/foo/bar'"
     end
   end
 
@@ -159,7 +159,7 @@ describe Shrimp::Phantom do
       expect { phantom.run! }.to raise_error Shrimp::RenderingError
     end
 
-    it "should be unable to copy file" do
+    it "should be unable to open file" do
       phantom = Shrimp::Phantom.new("file://#{test_file}")
       expect { phantom.to_pdf!("/foo/bar/") }.to raise_error Shrimp::RenderingError
     end
