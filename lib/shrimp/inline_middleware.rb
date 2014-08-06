@@ -5,70 +5,91 @@ module Shrimp
     def render_as_pdf(env)
       # In this same request, get the HTML from the app, save to a temp file, and start PhantomJS
       # rendering that temp HTML in the same process.
-      render_inline_html_to_pdf html_file_url(html(env))
-      return phantomjs_error_response if phantom.error?
-
-      body = pdf_body()
-      headers = pdf_headers(body, filename: @phantom.response_headers['X-Pdf-Filename'])
-      [200, headers, [body]]
+      responder = Responder.new(@app, env, @options, @request)
+      responder.respond
     end
-
-    attr_reader :phantom
 
     private
 
-    def html_file_url(html)
-      file = html_file(html)
-      "file://#{file.path}"
-    end
+    # Based on http://viget.com/extend/refactoring-patterns-the-rails-middleware-response-handler
+    # So we can use instance variables without having to worry about them being shared for all
+    # requests (since only one instance of the middleware class is created).
+    class Responder < Shrimp::BaseMiddleware::Responder
+      def initialize(app, env, options, request)
+        @app = app
+        @env = env
+        @options = options
+        @request = request
+      end
 
-    # TODO: add Responder class like in
-    # http://viget.com/extend/refactoring-patterns-the-rails-middleware-response-handler
-    # so we can use instance variables
-    def html_file_name
-      # @html_file_name ||=
-      "#{Shrimp.config.to_h[:tmpdir]}/#{self.class.name}-#{Digest::MD5.hexdigest((Time.now.to_i + rand(9001)).to_s)}.html"
-    end
+      attr_reader :phantom
 
-    def html_file(html)
-      File.new(html_file_name, 'w').tap {|file|
-        file.write html
-      }
-    end
+      def respond
+        render_inline_html_to_pdf
+        return phantomjs_error_response if phantom.error?
 
-    def html(env)
-      status, headers, response = html_response(env)
-      response.body
-    end
+        body = pdf_body()
+        headers = pdf_headers(body, filename: html_headers['X-Pdf-Filename'])
+        [200, headers, [body]]
+      end
 
-    def html_response(env)
-      env.each do |key, value|
-        if value =~ %r<\.pdf(\?|$)>
-          env[key].sub!(%r<\.pdf(\?|$)>, '\1')
+      def render_inline_html_to_pdf
+        log_render_pdf_start
+        Phantom.new(html_file_url, @options, {}).tap do |phantom|
+          @phantom = phantom
+          phantom.to_file(render_to)
+          log_render_pdf_completion
         end
       end
-      env['PhantomJS'] = 'Shrimp::InlineMiddleware'
-      @app.call(env)
-    end
 
-    def render_inline_html_to_pdf(html_file_url)
-      log_render_pdf_start
-      Phantom.new(html_file_url, @options, @request.cookies).tap do |phantom|
-        @phantom = phantom
-        phantom.to_file(render_to)
-        log_render_pdf_completion
+      def html_file_url
+        file = html_file
+        "file://#{file.path}"
       end
-    end
 
-    def phantomjs_error_response
-      headers = {'Content-Type' => 'text/html'}
-      if phantom.page_load_error?
-        status_code = phantom.page_load_status_code
-        headers['Location'] = phantom.redirect_to if phantom.redirect?
-      else
-        status_code = 500
+      # Creates a random file name in the temp dir.
+      def html_file_name
+        @html_file_name ||= Shrimp::Phantom.default_file_name('html')
       end
-      [status_code, headers, [phantom.error]]
+
+      def html_file
+        File.new(html_file_name, 'w').tap {|file|
+          file.write html
+        }
+      end
+
+      def html
+        status, headers, response = html_response
+        response.body
+      end
+
+      def html_headers
+        status, headers, response = html_response
+        headers
+      end
+
+      def html_response
+        @html_response ||= (
+          @env.each do |key, value|
+            if value =~ %r<\.pdf(\?|$)>
+              @env[key].sub!(%r<\.pdf(\?|$)>, '\1')
+            end
+          end
+          @env['PhantomJS'] = 'Shrimp::InlineMiddleware'
+          @app.call(@env)
+        )
+      end
+
+      def phantomjs_error_response
+        headers = {'Content-Type' => 'text/html'}
+        if phantom.page_load_error?
+          status_code = phantom.page_load_status_code
+          headers['Location'] = phantom.redirect_to if phantom.redirect?
+        else
+          status_code = 500
+        end
+        [status_code, headers, [phantom.error]]
+      end
     end
   end
 end
